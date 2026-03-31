@@ -118,7 +118,7 @@ function CodeBlock({
     children.length < 40
   ) {
     return (
-      <span className="bg-[#121211] text-[#f8f8f2] inline-block p-1 rounded-sm font-mono">
+      <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-xs font-mono border border-primary/10">
         {children}
       </span>
     )
@@ -127,12 +127,14 @@ function CodeBlock({
   // SQL blocks: hide the code, only show loading/results
   if (language === 'sql') {
     return (
-      <div className="flex flex-col my-3 gap-2">
+      <div className="flex flex-col my-4 gap-3">
         {isLoading || (isDisabled && !sqlResult) ? (
-          <div className="w-full h-20 bg-primary opacity-20 rounded-md animate-pulse" />
+          <div className="w-full h-16 rounded-lg shimmer" />
         ) : sqlResult ? (
           <>
-            <SqlResult result={sqlResult} />
+            <div className="rounded-lg border border-border/60 overflow-hidden bg-card/40">
+              <SqlResult result={sqlResult} />
+            </div>
             {typeof sqlResult !== 'string' && sqlResult.rows?.length > 0 && (
               <>
                 {!showChart && (
@@ -141,14 +143,14 @@ function CodeBlock({
                     variant={'outline'}
                     onClick={handleShowChart}
                     disabled={isChartLoading}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 text-xs w-fit border-border/60 hover:border-primary/40 hover:text-primary transition-colors"
                   >
-                    <BarChart3 className="w-4 h-4" />
-                    Show Chart
+                    <BarChart3 className="w-3.5 h-3.5" />
+                    Visualize
                   </Button>
                 )}
                 {showChart && chartConfig && (
-                  <div className="mt-4">
+                  <div className="mt-2 rounded-lg border border-border/60 p-4 bg-card/40">
                     <DynamicChart
                       chartData={convertToResult(sqlResult.rows)}
                       chartConfig={chartConfig}
@@ -165,22 +167,21 @@ function CodeBlock({
 
   // Non-SQL code blocks: show normally
   return (
-    <div className="flex flex-col my-3 gap-2">
-      <div className="relative">
-        <div className="absolute right-2 top-4">
-          <div className="w-4 h-4">
+    <div className="flex flex-col my-4 gap-2">
+      <div className="relative group rounded-lg overflow-hidden border border-border/40">
+        <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          <button
+            onClick={copyToClipboard}
+            className="p-1.5 rounded-md bg-background/80 backdrop-blur-sm border border-border/60 hover:border-primary/40 transition-colors"
+          >
             {copied ? (
-              <Check size={15} className="text-green-500" />
+              <Check size={13} className="text-primary" />
             ) : (
-              <Copy
-                size={15}
-                onClick={copyToClipboard}
-                className="cursor-pointer text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-              />
+              <Copy size={13} className="text-muted-foreground" />
             )}
-          </div>
+          </button>
         </div>
-        <pre className="!bg-prima !text-[#f8f8f2] w-full !p-5 !pt-8 text-sm rounded-md overflow-auto">
+        <pre className="!bg-card/60 !text-foreground/90 w-full !p-4 text-xs rounded-lg overflow-auto">
           <code className={`language-${language ?? 'markup'}`}>{children}</code>
         </pre>
       </div>

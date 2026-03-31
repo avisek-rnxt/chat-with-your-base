@@ -40,11 +40,10 @@ export function AppSidebarItems({
   }[] = [
     { title: 'Today', data: [] },
     { title: 'Yesterday', data: [] },
-    { title: 'Past', data: [] },
+    { title: 'Earlier', data: [] },
   ]
 
   for (const chat of chats || []) {
-    // Compare to today & yesterday based on ISO string
     const chatDateString = new Date(chat.created_at).toISOString().split('T')[0]
 
     if (chatDateString === todayString) {
@@ -68,8 +67,6 @@ export function AppSidebarItems({
     }
   }
 
-  // Sort each group's data in descending order by created_at,
-  // so the newest items appear first within each group.
   for (const group of items) {
     group.data.sort(
       (a, b) =>
@@ -77,7 +74,6 @@ export function AppSidebarItems({
     )
   }
 
-  // Filter out empty groups
   const filteredItems = items.filter((item) => item.data.length > 0)
 
   return (
@@ -85,7 +81,7 @@ export function AppSidebarItems({
       {filteredItems?.map((item) => (
         <SidebarMenuItem key={item.title}>
           <SidebarGroupLabel>
-            <h3 className="text-lg font-medium p-1 text-foreground">
+            <h3 className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60 px-1">
               {item.title}
             </h3>
           </SidebarGroupLabel>

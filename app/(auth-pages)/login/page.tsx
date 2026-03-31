@@ -1,16 +1,7 @@
-import Link from 'next/link'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { SubmitButton } from '@/components/submit-button'
 import { z } from 'zod'
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 
 const formSchema = z.object({
@@ -54,69 +45,73 @@ export default async function Login({
   }
 
   return (
-    <div className="flex-1 flex flex-col w-full px-8 sm:max-w-md justify-center gap-2 mt-30">
-      <Link
-        href="/"
-        className="absolute left-8 top-8 py-2 px-4 rounded-md no-underline text-foreground bg-btn-background hover:bg-btn-background-hover flex items-center group text-sm"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1"
-        >
-          <polyline points="15 18 9 12 15 6" />
-        </svg>{' '}
-        Back
-      </Link>
+    <div className="min-h-screen flex items-center justify-center px-4 relative">
+      {/* Subtle background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/3 pointer-events-none" />
 
-      <Card className="mx-auto max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4">
-            {/* TODO: google login */}
-            {/* <Button>Login with google</Button>
-
-            <div className="border-black border-b-2" /> */}
-            <form className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                />
-              </div>
-
-              <SubmitButton formAction={login} pendingText="Signing In...">
-                Login
-              </SubmitButton>
-              {(params?.message || params?.errorMessage) && (
-                <p
-                  className={`mt-4 p-1 text-center ${
-                    params.errorMessage ? 'text-red-500' : ''
-                  }`}
-                >
-                  {params.message || params.errorMessage}
-                </p>
-              )}
-            </form>
+      <div className="w-full max-w-sm relative">
+        {/* Logo */}
+        <div className="flex items-center justify-center gap-2.5 mb-10">
+          <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+              <ellipse cx="12" cy="5" rx="9" ry="3" />
+              <path d="M3 5V19A9 3 0 0 0 21 19V5" />
+              <path d="M3 12A9 3 0 0 0 21 12" />
+            </svg>
           </div>
-        </CardContent>
-      </Card>
+          <span className="text-base font-semibold tracking-tight">QueryBase</span>
+        </div>
+
+        {/* Card */}
+        <div className="rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm p-8 gradient-border">
+          <div className="text-center mb-6">
+            <h1 className="text-xl font-semibold mb-1.5">Welcome back</h1>
+            <p className="text-sm text-muted-foreground">
+              Sign in with your email to continue
+            </p>
+          </div>
+
+          <form className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-xs font-medium text-muted-foreground">
+                Email address
+              </label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="you@example.com"
+                required
+                className="h-10 bg-background/60 border-border/60 focus:border-primary/40 text-sm"
+              />
+            </div>
+
+            <SubmitButton
+              formAction={login}
+              pendingText="Signing in..."
+              className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-sm transition-all hover:shadow-lg hover:shadow-primary/20"
+            >
+              Continue with Email
+            </SubmitButton>
+
+            {(params?.message || params?.errorMessage) && (
+              <div
+                className={`mt-3 p-3 rounded-lg text-center text-sm ${
+                  params.errorMessage
+                    ? 'bg-destructive/10 text-destructive border border-destructive/20'
+                    : 'bg-primary/10 text-primary border border-primary/20'
+                }`}
+              >
+                {params.message || params.errorMessage}
+              </div>
+            )}
+          </form>
+        </div>
+
+        <p className="text-center text-[11px] text-muted-foreground/40 mt-6">
+          We'll send you a magic link to sign in
+        </p>
+      </div>
     </div>
   )
 }
