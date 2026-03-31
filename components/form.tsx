@@ -1,11 +1,9 @@
 'use client'
 
 import React, { useCallback, useRef, useState } from 'react'
-
-import { FlipWords } from './flipping-words'
 import { motion } from 'motion/react'
-
 import { Textarea } from '@/components/ui/textarea'
+import { ArrowUp } from 'lucide-react'
 
 type Props = {
   value: string
@@ -34,13 +32,6 @@ export function Form({ onChange, onSubmit, value }: Props) {
 
   const animationRef = useRef<HTMLDivElement | null>(null)
 
-  const searchs = [
-    'How can optimize this query?',
-    'What are my DB stats?',
-    'What indexes is my database ignoring?',
-    'How can I get all users that signed up in the last 30 days?',
-  ]
-
   const handleResize = useCallback(() => {
     if (animationRef.current && inputRef.current) {
       inputRef.current.style.height = 'auto'
@@ -65,12 +56,6 @@ export function Form({ onChange, onSubmit, value }: Props) {
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto relative">
       <div className="relative">
-        {value || conversationStarted ? null : (
-          <div className="absolute left-4  top-4 pointer-events-none text-muted-foreground">
-            <FlipWords words={searchs} />
-          </div>
-        )}
-
         <motion.div
           initial={{ opacity: 0, scale: 1 }}
           animate={{
@@ -78,33 +63,43 @@ export function Form({ onChange, onSubmit, value }: Props) {
             scale: focused ? 1 : 0.98,
           }}
           transition={{
-            duration: 0.2,
-            ease: 'easeInOut',
+            duration: 0.3,
+            ease: 'easeOut',
           }}
-          className="absolute inset-0 blur-md bg-primary/5 rounded-lg pointer-events-none"
+          className="absolute inset-0 rounded-xl pointer-events-none"
+          style={{
+            background: 'linear-gradient(135deg, hsl(27 92% 53% / 0.06), hsl(35 90% 55% / 0.04))',
+          }}
           ref={animationRef}
         />
 
-        <Textarea
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          ref={inputRef}
-          onChange={(e) => {
-            onChange(e)
-            handleResize()
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              handleSubmit(e)
-            }
-          }}
-          placeholder={
-            conversationStarted ? 'Ask anything about your DB...' : ''
-          }
-          value={value}
-          className="resize-none w-full p-4 rounded-lg min-h-[56px] bg-background border focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-        />
+        <div className="relative">
+          <Textarea
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            ref={inputRef}
+            onChange={(e) => {
+              onChange(e)
+              handleResize()
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleSubmit(e)
+              }
+            }}
+            placeholder="Ask anything about your database..."
+            value={value}
+            className="resize-none w-full p-4 pr-14 rounded-xl min-h-[56px] bg-background border border-border focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-300 text-sm placeholder:text-muted-foreground/50 shadow-sm"
+          />
+          <button
+            type="submit"
+            disabled={!value}
+            className="absolute right-3 bottom-3 p-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-20 disabled:cursor-not-allowed hover:bg-primary/90 transition-all duration-200 hover:shadow-lg hover:shadow-primary/20"
+          >
+            <ArrowUp size={16} />
+          </button>
+        </div>
       </div>
     </form>
   )

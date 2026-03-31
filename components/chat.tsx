@@ -1,7 +1,7 @@
 'use client'
 
 import { useChat } from '@ai-sdk/react'
-import { useAppLocalStorage } from '@/hooks/use-app-local-storage'
+
 import { useRef, useCallback, useMemo, useState, useEffect, memo } from 'react'
 import { motion } from 'motion/react'
 import { Form } from './form'
@@ -23,6 +23,7 @@ import Navbar from './navbar'
 import { User } from '@supabase/supabase-js'
 import { useAppState } from '../state'
 import { usePathname } from 'next/navigation'
+import { Greeting } from './greeting'
 
 const toolCallToNameText = {
   getExplainForQuery: 'Getting query plan...',
@@ -40,7 +41,6 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
   const pathname = usePathname()
   const { toast } = useToast()
   const messagesChat = useRef<HTMLDivElement | null>(null)
-  const { value } = useAppLocalStorage()
 
   // Optimize scroll behavior with RAF
   const scrollMessagesToBottom = useCallback(() => {
@@ -84,10 +84,7 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
   const { messages, input, handleInputChange, handleSubmit, isLoading } =
     useChat({
       api: '/api/chat',
-      headers: {
-        'x-connection-string': value.connectionString,
-        'x-openai-api-key': value.openaiApiKey,
-      },
+      headers: {},
       onFinish,
       streamProtocol: 'data',
       sendExtraMessageFields: true,
@@ -135,24 +132,25 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
     <div className="flex-1 flex flex-col w-full">
       <Navbar user={user} />
 
-      <div ref={messagesChat} className="flex-1 overflow-y-auto w-full">
-        <div className="container mx-auto max-w-4xl h-full">
-          <div className="px-4 py-6">
-            <div className="w-full space-y-12">
-              {messages.map((message) => (
+      <div ref={messagesChat} className="flex-1 overflow-y-auto w-full scrollbar-thin">
+        <div className="container mx-auto max-w-3xl h-full">
+          <div className="px-6 py-8">
+            <div className="w-full space-y-10">
+              {messages.length === 0 && <Greeting user={user} />}
+              {messages.map((message, msgIndex) => (
                 <motion.div
                   key={message.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: 0.25 }}
                   className="w-full"
                 >
                   {message.role === 'user' ? (
                     <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3 }}
-                      className="text-2xl font-bold text-primary mb-6 border-b pb-2"
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                      className="text-lg font-semibold text-foreground/90 pb-3 border-b border-primary/20"
                     >
                       {message.content}
                     </motion.div>
@@ -163,7 +161,7 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ duration: 0.4 }}
-                          className="text-base prose prose-neutral dark:prose-invert max-w-none"
+                          className="text-sm leading-relaxed prose prose-neutral dark:prose-invert max-w-none prose-p:text-foreground/80 prose-strong:text-foreground prose-headings:text-foreground"
                         >
                           {message.parts ? (
                             message.parts.map((part, index) => {
@@ -187,9 +185,6 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
                                         : 'markup'
                                       return (
                                         <CodeBlock
-                                          connectionString={
-                                            value.connectionString
-                                          }
                                           isDisabled={isLoading}
                                           language={language}
                                           sqlResult={
@@ -282,7 +277,6 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
                                     : 'markup'
                                   return (
                                     <CodeBlock
-                                      connectionString={value.connectionString}
                                       isDisabled={isLoading}
                                       language={language}
                                       sqlResult={
@@ -368,8 +362,7 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
                       )}
                       {(showSkeleton || toolsLoading.length > 0) &&
                         message.id === messages[messages.length - 1].id && (
-                          <div className="mt-6">
-                            <TextSkeleton />
+                          <div className="mt-4 space-y-3">
                             {toolsLoading.map((tool) => {
                               const aiRunningText =
                                 toolCallToNameText[
@@ -380,33 +373,49 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
                                 aiRunningText && (
                                   <motion.div
                                     key={tool.toolCallId}
-                                    initial={{ opacity: 0.5 }}
-                                    animate={{ opacity: [0.5, 1, 0.5] }}
-                                    transition={{
-                                      duration: 1.5,
-                                      repeat: Number.POSITIVE_INFINITY,
-                                      ease: 'easeInOut',
-                                    }}
-                                    className="text-primary/70 font-medium mt-2"
+                                    initial={{ opacity: 0, y: 4 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="flex items-center gap-2 text-xs text-primary/70"
                                   >
+                                    <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
                                     <p>{aiRunningText}</p>
                                   </motion.div>
                                 )
                               )
                             })}
+                            <TextSkeleton />
                           </div>
                         )}
                     </>
                   )}
                 </motion.div>
               ))}
+              {showSkeleton && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full"
+                >
+                  <div className="flex items-center gap-2 text-xs text-primary/70 mb-3">
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                    <p>Thinking...</p>
+                  </div>
+                  <TextSkeleton />
+                </motion.div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex-none border-t bg-sidebar">
-        <div className="container max-w-4xl mx-auto p-4">
+      <div className="flex-none border-t border-border bg-card/50 backdrop-blur-md">
+        <div className="container max-w-3xl mx-auto px-6 py-4">
           <Form
             onChange={handleInputChange}
             value={input}

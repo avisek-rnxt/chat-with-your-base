@@ -1,7 +1,12 @@
 'use server'
 
-import { openai } from '@ai-sdk/openai'
-import { generateObject } from 'ai'
+import { createOpenAI } from '@ai-sdk/openai'
+import { generateText } from 'ai'
+
+const openrouter = createOpenAI({
+  apiKey: process.env.OPENROUTER_API_KEY!,
+  baseURL: 'https://openrouter.ai/api/v1',
+})
 
 import { type Result, configSchema, type Config } from '@/lib/chart'
 
@@ -9,48 +14,46 @@ export const generateChartConfig = async (
   results: Result[],
   userQuery: string
 ) => {
-  const system = 'You are a data visualization expert. '
-
   try {
-    const { object: config } = await generateObject({
-      model: openai('gpt-4o'),
-      system,
-      prompt: `Given the following data from a SQL query result, generate the chart config that best visualises the data and answers the users query.
-      For multiple groups use multi-lines.
+    const { text } = await generateText({
+      model: openrouter(process.env.OPENROUTER_MODEL || 'openai/gpt-4o'),
+      maxTokens: 1024,
+      system: 'You are a data visualization expert. You only respond with valid JSON, no markdown fences or explanation.',
+      prompt: `Given the following data from a SQL query result, generate a chart config JSON object.
 
-      Here is an example complete config:
-      export const chartConfig = {
-        type: "pie",
-        xKey: "month",
-        yKeys: ["sales", "profit", "expenses"],
-        colors: {
-          sales: "#4CAF50",    // Green for sales
-          profit: "#2196F3",   // Blue for profit
-          expenses: "#F44336"  // Red for expenses
-        },
-        legend: true
-      }
+Required fields:
+- "type": one of "bar", "line", "area", "pie", "scatter"
+- "xKey": string (key for x-axis)
+- "yKeys": string[] (keys for y-axis values)
+- "legend": boolean
+- "description": string (what the chart shows)
+- "takeaway": string (main insight)
+- "title": string
 
-      Here's another example for scatter plot:
-      export const scatterConfig = {
-        type: "scatter",
-        xKey: "revenue",       // Numeric x-axis value
-        yKeys: ["profit"],     // Numeric y-axis value(s)
-        colors: {
-          profit: "#2196F3"    // Blue for profit points
-        },
-        legend: true,
-        description: "Scatter plot showing relationship between revenue and profit",
-        takeaway: "There is a positive correlation between revenue and profit"
-      }
+Optional fields:
+- "colors": object mapping yKeys to CSS color strings
+- "multipleLines": boolean (line charts only)
+- "measurementColumn": string (line charts only)
+- "lineCategories": string[] (line charts only)
 
-      User Query:
-      ${userQuery}
+Example:
+{"type":"bar","xKey":"month","yKeys":["count"],"legend":true,"description":"Monthly counts","takeaway":"Steady growth","title":"Monthly Data"}
 
-      Data:
-      ${JSON.stringify(results, null, 2)}`,
-      schema: configSchema,
+User Query: ${userQuery}
+
+Data: ${JSON.stringify(results.slice(0, 50), null, 2)}
+
+Respond with ONLY the JSON object, nothing else.`,
     })
+
+    // Extract JSON from response (handle potential markdown fences)
+    let jsonStr = text.trim()
+    if (jsonStr.startsWith('```')) {
+      jsonStr = jsonStr.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
+    }
+
+    const parsed = JSON.parse(jsonStr)
+    const config = configSchema.parse(parsed)
 
     const colors: Record<string, string> = {}
     config.yKeys.forEach((key, index) => {

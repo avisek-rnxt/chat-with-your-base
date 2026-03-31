@@ -7,7 +7,7 @@ import {
   appendResponseMessages,
   generateText,
 } from 'ai'
-import { headers } from 'next/headers'
+
 import { z } from 'zod'
 import {
   getExplainForQuery,
@@ -35,10 +35,11 @@ export async function POST(req: Request) {
   const { messages, id } = await req.json()
   console.log('Request payload:', { id, messageCount: messages?.length })
 
-  const headers_ = await headers()
-  const connectionString = headers_.get('x-connection-string')
-  const openaiApiKey = headers_.get('x-openai-api-key')
-  const model = headers_.get('x-model')
+  const connectionString = process.env.DATABASE_URL
+
+  if (!connectionString) {
+    return new Response('No database connection configured', { status: 500 })
+  }
 
   if (!id) {
     console.log('Bad request: No id provided')
@@ -72,16 +73,9 @@ export async function POST(req: Request) {
     return new Response('Unauthorized', { status: 401 })
   }
 
-  if (!connectionString) {
-    console.log('Bad request: Missing connection string')
-    return new Response('No connection string provided', { status: 400 })
-  }
-
-  const projectOpenaiApiKey = process.env.OPENAI_API_KEY
-
-  const openai = createOpenAI({
-    // biome-ignore lint/style/noNonNullAssertion: <explanation>
-    apiKey: projectOpenaiApiKey!,
+  const openrouter = createOpenAI({
+    apiKey: process.env.OPENROUTER_API_KEY!,
+    baseURL: 'https://openrouter.ai/api/v1',
   })
 
   const shouldUpdateChats = !chat
@@ -89,7 +83,7 @@ export async function POST(req: Request) {
   const result = streamText({
     // todo remove any we already validate the field
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    model: openai('gpt-4o'),
+    model: openrouter(process.env.OPENROUTER_MODEL || 'openai/gpt-4o'),
     messages: convertToCoreMessages(messages),
 
     system: `
@@ -240,7 +234,7 @@ export async function POST(req: Request) {
         } else {
           console.log('Creating new chat:', id)
           const generatedName = await generateText({
-            model: openai('gpt-4o-mini'),
+            model: openrouter(process.env.OPENROUTER_MODEL_SMALL || 'openai/gpt-4o-mini'),
             system: `
 You are an assistant that generates short, concise, descriptive chat names for a PostgreSQL chatbot. 
 The name must:

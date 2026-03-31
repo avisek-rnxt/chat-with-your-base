@@ -53,7 +53,7 @@ export function ChatName({
       if (response.success) {
         toast({
           title: 'Name changed successfully',
-          description: 'Your audio name has been updated',
+          description: 'Chat name has been updated',
         })
       }
       setIsEditingName(false)

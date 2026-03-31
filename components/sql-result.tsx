@@ -26,8 +26,19 @@ export default function SqlResult({
       return processedRow
     })
 
-    return <DataTable columns={headers} data={processedRows} />
+    return (
+      <div className="overflow-hidden">
+        <DataTable columns={headers} data={processedRows} />
+        <div className="px-3 py-1.5 text-[10px] text-muted-foreground/50 border-t border-border/30 bg-muted/20">
+          {result.rowCount} {result.rowCount === 1 ? 'row' : 'rows'}
+        </div>
+      </div>
+    )
   }
 
-  return <pre>{JSON.stringify(result, null, 2)}</pre>
+  return (
+    <div className="p-3 text-sm text-destructive/80 bg-destructive/5 rounded-lg border border-destructive/20">
+      <pre className="whitespace-pre-wrap text-xs">{typeof result === 'string' ? result : JSON.stringify(result, null, 2)}</pre>
+    </div>
+  )
 }

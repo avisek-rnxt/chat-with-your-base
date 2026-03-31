@@ -4,64 +4,69 @@ import { SubmitButton } from '@/components/submit-button'
 import { z } from 'zod'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
-import { RememberMe } from '@/components/remember-me'
 import Link from 'next/link'
-import { cookies } from 'next/headers'
 
 const formSchema = z.object({
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
   email: z.string().email(),
   password: z.string().min(6),
 })
 
-export default async function Login({
+export default async function Signup({
   searchParams,
 }: {
   searchParams: Promise<{ message: string; errorMessage: string }>
 }) {
   const params = await searchParams
-
-  // Read remembered email from cookie
-  const cookieStore = await cookies()
-  const rememberedEmail = cookieStore.get('remembered_email')?.value || ''
-
-  const login = async (formData: FormData) => {
+  const signup = async (formData: FormData) => {
     'use server'
 
     const formSafeParsed = formSchema.safeParse({
+      firstName: formData.get('firstName') as string,
+      lastName: formData.get('lastName') as string,
       email: formData.get('email') as string,
       password: formData.get('password') as string,
     })
     if (!formSafeParsed.success) {
-      return redirect('/login?errorMessage=Invalid email or password')
-    }
-
-    const rememberMe = formData.get('rememberMe') === 'true'
-    const cookieStore = await cookies()
-
-    if (rememberMe) {
-      cookieStore.set('remembered_email', formSafeParsed.data.email, {
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-      })
-    } else {
-      cookieStore.delete('remembered_email')
+      const errors = formSafeParsed.error.flatten().fieldErrors
+      const msg = errors.email
+        ? 'Invalid email'
+        : errors.password
+          ? 'Password must be at least 6 characters'
+          : 'Please fill in all fields'
+      return redirect(`/signup?errorMessage=${encodeURIComponent(msg)}`)
     }
 
     const supabase = await createClient()
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signUp({
       email: formSafeParsed.data.email,
       password: formSafeParsed.data.password,
+      options: {
+        data: {
+          first_name: formSafeParsed.data.firstName,
+          last_name: formSafeParsed.data.lastName,
+        },
+      },
     })
 
     if (error) {
-      return redirect(`/login?errorMessage=${encodeURIComponent(error.message)}`)
+      return redirect(`/signup?errorMessage=${encodeURIComponent(error.message)}`)
     }
 
-    return redirect('/app')
+    // If email confirmation is required, user.identities will be empty
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      return redirect('/signup?errorMessage=An account with this email already exists')
+    }
+
+    // If session exists, user is confirmed and logged in
+    if (data.session) {
+      return redirect('/app')
+    }
+
+    // Email confirmation required
+    return redirect('/login?message=Check your email to confirm your account')
   }
 
   return (
@@ -82,13 +87,42 @@ export default async function Login({
 
         <div className="rounded-xl border border-border bg-card/60 backdrop-blur-sm p-8">
           <div className="text-center mb-6">
-            <h1 className="text-xl font-semibold mb-1.5">Welcome back</h1>
+            <h1 className="text-xl font-semibold mb-1.5">Create an account</h1>
             <p className="text-sm text-muted-foreground">
-              Sign in to your account
+              Get started with Bamboo Base
             </p>
           </div>
 
           <form className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label htmlFor="firstName" className="text-xs font-medium text-muted-foreground">
+                  First name
+                </label>
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  placeholder="John"
+                  required
+                  className="h-10 bg-background border-border text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="lastName" className="text-xs font-medium text-muted-foreground">
+                  Last name
+                </label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  placeholder="Doe"
+                  required
+                  className="h-10 bg-background border-border text-sm"
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <label htmlFor="email" className="text-xs font-medium text-muted-foreground">
                 Email
@@ -99,7 +133,6 @@ export default async function Login({
                 type="email"
                 placeholder="you@example.com"
                 required
-                defaultValue={rememberedEmail}
                 className="h-10 bg-background border-border text-sm"
               />
             </div>
@@ -116,16 +149,17 @@ export default async function Login({
                 minLength={6}
                 className="h-10 bg-background border-border text-sm pr-10"
               />
+              <p className="text-[11px] text-muted-foreground/60">
+                Must be at least 6 characters
+              </p>
             </div>
 
-            <RememberMe />
-
             <SubmitButton
-              formAction={login}
-              pendingText="Signing in..."
+              formAction={signup}
+              pendingText="Creating account..."
               className="w-full h-10 bg-primary text-primary-foreground hover:bg-primary/90 font-medium text-sm transition-all hover:shadow-lg hover:shadow-primary/20"
             >
-              Sign In
+              Create Account
             </SubmitButton>
 
             {(params?.message || params?.errorMessage) && (
@@ -142,9 +176,9 @@ export default async function Login({
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
-            Don't have an account?{' '}
-            <Link href="/signup" className="text-primary hover:underline font-medium">
-              Sign up
+            Already have an account?{' '}
+            <Link href="/login" className="text-primary hover:underline font-medium">
+              Sign in
             </Link>
           </p>
         </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from './ui/button'
-
+import { Plus } from 'lucide-react'
 import { useAppState } from '../state'
 import { v4 } from 'uuid'
 
@@ -23,7 +23,13 @@ export function NewChatSidebar() {
     }
   }
   return (
-    <Button variant="ghost" className="w-full" size="lg" onClick={handleClick}>
+    <Button
+      variant="outline"
+      className="w-full gap-2 border-border/60 hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-all duration-200 text-sm"
+      size="sm"
+      onClick={handleClick}
+    >
+      <Plus size={14} />
       New Chat
     </Button>
   )

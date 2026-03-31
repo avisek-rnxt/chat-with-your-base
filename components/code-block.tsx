@@ -1,7 +1,7 @@
 'use client'
 
 import { Check, Copy, BarChart3 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { runSql } from '@/actions/run-sql'
@@ -34,14 +34,12 @@ function CodeBlock({
   sqlResult,
   setSqlResult,
   isDisabled,
-  connectionString,
 }: {
   children: React.ReactNode
   language?: string
   sqlResult?: QueryResult<unknown[]> | string
   setSqlResult: (result: QueryResult<unknown[]> | string) => void
   isDisabled?: boolean
-  connectionString: string
 }) {
   useEffect(() => {
     Prism.highlightAll()
@@ -51,6 +49,33 @@ function CodeBlock({
   const [showChart, setShowChart] = useState(false)
   const [chartConfig, setChartConfig] = useState<Config | null>(null)
   const [isChartLoading, setIsChartLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const hasAutoRun = useRef(false)
+
+  // Auto-run SQL queries once streaming is done
+  useEffect(() => {
+    if (
+      language === 'sql' &&
+      children &&
+      !hasAutoRun.current &&
+      !sqlResult &&
+      !isDisabled
+    ) {
+      hasAutoRun.current = true
+      const run = async () => {
+        setIsLoading(true)
+        const result = await runSql(children.toString())
+        try {
+          const parsedResult = JSON.parse(result)
+          setSqlResult?.(parsedResult)
+        } catch {
+          setSqlResult?.(result)
+        }
+        setIsLoading(false)
+      }
+      run()
+    }
+  }, [language, children, sqlResult, isDisabled])
 
   const copyToClipboard = async () => {
     try {
@@ -62,34 +87,6 @@ function CodeBlock({
     } catch (error) {
       console.error('Failed to copy to clipboard', error)
     }
-  }
-
-  const [isLoading, setIsLoading] = useState(false)
-
-  const run = async () => {
-    if (!children?.toString()) {
-      toast({
-        title: 'No SQL query provided',
-        description: 'Please provide a valid SQL query',
-      })
-      return
-    }
-    setIsLoading(true)
-
-    const sqlFunctionBinded = runSql.bind(
-      null,
-      children?.toString(),
-      connectionString
-    )
-    const result = await sqlFunctionBinded()
-    try {
-      const parsedResult = JSON.parse(result)
-      setSqlResult?.(parsedResult)
-    } catch {
-      setSqlResult?.(result)
-    }
-
-    setIsLoading(false)
   }
 
   const handleShowChart = async () => {
@@ -114,81 +111,80 @@ function CodeBlock({
     setIsChartLoading(false)
   }
 
+  // Inline code (non-SQL short strings)
   if (
     language !== 'sql' &&
     typeof children === 'string' &&
     children.length < 40
   ) {
     return (
-      <span className="bg-[#121211] text-[#f8f8f2] inline-block p-1 rounded-sm font-mono">
+      <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-xs font-mono border border-primary/10">
         {children}
       </span>
     )
   }
 
-  return (
-    <div className="flex flex-col my-3 gap-2">
-      <div className="relative">
-        <div className="absolute right-2 top-4">
-          <div className="w-4 h-4">
-            {copied ? (
-              <Check size={15} className="text-green-500" />
-            ) : (
-              <Copy
-                size={15}
-                onClick={copyToClipboard}
-                className="cursor-pointer text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-              />
+  // SQL blocks: hide the code, only show loading/results
+  if (language === 'sql') {
+    return (
+      <div className="flex flex-col my-4 gap-3">
+        {isLoading || (isDisabled && !sqlResult) ? (
+          <div className="w-full h-16 rounded-lg shimmer" />
+        ) : sqlResult ? (
+          <>
+            <div className="rounded-lg border border-border/60 overflow-hidden bg-card/40">
+              <SqlResult result={sqlResult} />
+            </div>
+            {typeof sqlResult !== 'string' && sqlResult.rows?.length > 0 && (
+              <>
+                {!showChart && (
+                  <Button
+                    size={'sm'}
+                    variant={'outline'}
+                    onClick={handleShowChart}
+                    disabled={isChartLoading}
+                    className="flex items-center gap-2 text-xs w-fit border-border/60 hover:border-primary/40 hover:text-primary transition-colors"
+                  >
+                    <BarChart3 className="w-3.5 h-3.5" />
+                    Visualize
+                  </Button>
+                )}
+                {showChart && chartConfig && (
+                  <div className="mt-2 rounded-lg border border-border/60 p-4 bg-card/40">
+                    <DynamicChart
+                      chartData={convertToResult(sqlResult.rows)}
+                      chartConfig={chartConfig}
+                    />
+                  </div>
+                )}
+              </>
             )}
-          </div>
+          </>
+        ) : null}
+      </div>
+    )
+  }
+
+  // Non-SQL code blocks: show normally
+  return (
+    <div className="flex flex-col my-4 gap-2">
+      <div className="relative group rounded-lg overflow-hidden border border-border/40">
+        <div className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          <button
+            onClick={copyToClipboard}
+            className="p-1.5 rounded-md bg-background/80 backdrop-blur-sm border border-border/60 hover:border-primary/40 transition-colors"
+          >
+            {copied ? (
+              <Check size={13} className="text-primary" />
+            ) : (
+              <Copy size={13} className="text-muted-foreground" />
+            )}
+          </button>
         </div>
-        <pre className="!bg-prima !text-[#f8f8f2] w-full !p-5 !pt-8 text-sm rounded-md overflow-auto">
+        <pre className="!bg-card/60 !text-foreground/90 w-full !p-4 text-xs rounded-lg overflow-auto">
           <code className={`language-${language ?? 'markup'}`}>{children}</code>
         </pre>
       </div>
-      {isLoading ? (
-        <div className="w-full h-32 bg-primary opacity-20 rounded-md animate-pulse" />
-      ) : sqlResult ? (
-        <>
-          <SqlResult result={sqlResult} />
-          {typeof sqlResult !== 'string' && sqlResult.rows?.length > 0 && (
-            <>
-              {!showChart && (
-                <Button
-                  size={'sm'}
-                  variant={'outline'}
-                  onClick={handleShowChart}
-                  disabled={isChartLoading || isDisabled}
-                  className="flex items-center gap-2"
-                >
-                  <BarChart3 className="w-4 h-4" />
-                  Show Chart
-                </Button>
-              )}
-              {showChart && chartConfig && (
-                <div className="mt-4">
-                  <DynamicChart
-                    chartData={convertToResult(sqlResult.rows)}
-                    chartConfig={chartConfig}
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </>
-      ) : null}
-
-      {language === 'sql' && (
-        <Button
-          disabled={isDisabled}
-          aria-disabled={isDisabled}
-          size={'sm'}
-          variant={'outline'}
-          onClick={run}
-        >
-          Run SQL
-        </Button>
-      )}
     </div>
   )
 }

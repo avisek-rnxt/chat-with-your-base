@@ -1,10 +1,8 @@
 'use client'
 
-import { useAppLocalStorage } from '@/hooks/use-app-local-storage'
 import Chat from './chat'
-import ConnectionForm from './connection-form'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { Message } from 'ai'
 import { User } from '@supabase/supabase-js'
 import { useAppState } from '@/state'
@@ -24,7 +22,6 @@ export default function ChatInterface({
     | undefined
   user: User
 }) {
-  const { value, setValue } = useAppLocalStorage()
   const { setChat, chat: chatState } = useAppState()
 
   const isMounted = useIsMounted()
@@ -41,21 +38,8 @@ export default function ChatInterface({
     }
   }, [setChat, chatProp])
 
-  const shouldShowChat = useMemo(() => {
-    if (!isMounted) return false
-    return !!value.connectionString
-  }, [isMounted, value.connectionString])
-
   if (!isMounted) return null
   if (!chatState?.id) return null
 
-  return (
-    <>
-      {shouldShowChat ? (
-        <Chat initialId={chatState.id} user={user} key={chatState.id} />
-      ) : (
-        <ConnectionForm setConnectionString={setValue} />
-      )}
-    </>
-  )
+  return <Chat initialId={chatState.id} user={user} key={chatState.id} />
 }
