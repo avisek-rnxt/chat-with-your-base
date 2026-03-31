@@ -6,13 +6,11 @@ import { SubmitButton } from '@/components/submit-button'
 import { Button } from '@/components/ui/button'
 import type { User } from '@supabase/supabase-js'
 import { AnimatePresence } from 'motion/react'
-import { useAppLocalStorage } from '@/hooks/use-app-local-storage'
 import { useAppState } from '@/state'
 import { SidebarTrigger } from './ui/sidebar'
 import { ChatName } from './chat-name'
 import { useToast } from '../hooks/use-toast'
 export default function Navbar({ user }: { user: User }) {
-  const { value, setValue } = useAppLocalStorage()
   const chat = useAppState((s) => s.chat)
   const { toast } = useToast()
 
@@ -46,29 +44,8 @@ export default function Navbar({ user }: { user: User }) {
             >
               Feedback
             </Button>
-            {value.connectionString && (
-              <AnimatePresence>
-                <Button
-                  variant="secondary"
-                  onClick={() =>
-                    setValue((prev) => ({
-                      ...prev,
-                      connectionString: '',
-                    }))
-                  }
-                >
-                  Change Database
-                </Button>
-              </AnimatePresence>
-            )}
             <form
               action={async () => {
-                setValue({
-                  connectionString: '',
-                  openaiApiKey: '',
-                  model: 'gpt-4o-mini',
-                })
-
                 await logoutAction()
               }}
             >

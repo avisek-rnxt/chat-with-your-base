@@ -34,14 +34,12 @@ function CodeBlock({
   sqlResult,
   setSqlResult,
   isDisabled,
-  connectionString,
 }: {
   children: React.ReactNode
   language?: string
   sqlResult?: QueryResult<unknown[]> | string
   setSqlResult: (result: QueryResult<unknown[]> | string) => void
   isDisabled?: boolean
-  connectionString: string
 }) {
   useEffect(() => {
     Prism.highlightAll()
@@ -76,12 +74,7 @@ function CodeBlock({
     }
     setIsLoading(true)
 
-    const sqlFunctionBinded = runSql.bind(
-      null,
-      children?.toString(),
-      connectionString
-    )
-    const result = await sqlFunctionBinded()
+    const result = await runSql(children?.toString())
     try {
       const parsedResult = JSON.parse(result)
       setSqlResult?.(parsedResult)

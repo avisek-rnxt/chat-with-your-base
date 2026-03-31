@@ -11,7 +11,10 @@ The AI that really knows your postgres DB
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-OPENAI_API_KEY=your-openai-api-key
+DATABASE_URL=your-postgres-connection-string
+OPENROUTER_API_KEY=your-openrouter-api-key
+OPENROUTER_MODEL=nvidia/nemotron-3-super-120b-a12b:free
+OPENROUTER_MODEL_SMALL=nvidia/nemotron-3-super-120b-a12b:free
 ```
 
 3. Install dependencies

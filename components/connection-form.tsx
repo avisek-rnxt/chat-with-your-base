@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/hooks/use-toast'
 import { validateDbConnection } from '@/actions/validate-db-connection'
-import { validateOpenaiKey } from '@/actions/validate-openai-key'
+
 import {
   Card,
   CardHeader,
@@ -59,13 +59,7 @@ export function ConnectionForm({
         throw new Error(response)
       }
 
-      // Validate OpenAI API key if provided
-      if (openaiApiKey) {
-        const openaiResponse = await validateOpenaiKey(openaiApiKey)
-        if (openaiResponse !== 'Valid API key') {
-          throw new Error('Invalid OpenAI API key')
-        }
-      }
+
 
       setTestSuccess(true)
       setConnectionString({

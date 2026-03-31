@@ -2,7 +2,11 @@
 
 import { Client } from 'pg'
 
-export async function runSql(sql: string, connectionString: string) {
+export async function runSql(sql: string) {
+  const connectionString = process.env.DATABASE_URL
+  if (!connectionString) {
+    return 'DATABASE_URL environment variable is not configured'
+  }
   if (
     sql.trim().toLowerCase().includes('drop') ||
     sql.trim().toLowerCase().includes('delete') ||

@@ -1,7 +1,7 @@
 'use client'
 
 import { useChat } from '@ai-sdk/react'
-import { useAppLocalStorage } from '@/hooks/use-app-local-storage'
+
 import { useRef, useCallback, useMemo, useState, useEffect, memo } from 'react'
 import { motion } from 'motion/react'
 import { Form } from './form'
@@ -40,7 +40,6 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
   const pathname = usePathname()
   const { toast } = useToast()
   const messagesChat = useRef<HTMLDivElement | null>(null)
-  const { value } = useAppLocalStorage()
 
   // Optimize scroll behavior with RAF
   const scrollMessagesToBottom = useCallback(() => {
@@ -84,10 +83,7 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
   const { messages, input, handleInputChange, handleSubmit, isLoading } =
     useChat({
       api: '/api/chat',
-      headers: {
-        'x-connection-string': value.connectionString,
-        'x-openai-api-key': value.openaiApiKey,
-      },
+      headers: {},
       onFinish,
       streamProtocol: 'data',
       sendExtraMessageFields: true,
@@ -187,9 +183,6 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
                                         : 'markup'
                                       return (
                                         <CodeBlock
-                                          connectionString={
-                                            value.connectionString
-                                          }
                                           isDisabled={isLoading}
                                           language={language}
                                           sqlResult={
@@ -282,7 +275,6 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
                                     : 'markup'
                                   return (
                                     <CodeBlock
-                                      connectionString={value.connectionString}
                                       isDisabled={isLoading}
                                       language={language}
                                       sqlResult={
