@@ -170,7 +170,7 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
                               }
 
                               const content =
-                                'text' in part ? part.text : part.reasoning
+                                'text' in part ? part.text : ('reasoning' in part ? (part as any).reasoning : '')
 
                               return (
                                 <Markdown
