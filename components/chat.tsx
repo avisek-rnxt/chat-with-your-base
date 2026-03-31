@@ -23,6 +23,7 @@ import Navbar from './navbar'
 import { User } from '@supabase/supabase-js'
 import { useAppState } from '../state'
 import { usePathname } from 'next/navigation'
+import { Greeting } from './greeting'
 
 const toolCallToNameText = {
   getExplainForQuery: 'Getting query plan...',
@@ -135,6 +136,7 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
         <div className="container mx-auto max-w-3xl h-full">
           <div className="px-6 py-8">
             <div className="w-full space-y-10">
+              {messages.length === 0 && <Greeting user={user} />}
               {messages.map((message, msgIndex) => (
                 <motion.div
                   key={message.id}
@@ -412,7 +414,7 @@ function ChatComponent({ initialId, user }: { initialId: string; user: User }) {
         </div>
       </div>
 
-      <div className="flex-none border-t border-border/40 bg-background/60 backdrop-blur-md">
+      <div className="flex-none border-t border-border bg-card/50 backdrop-blur-md">
         <div className="container max-w-3xl mx-auto px-6 py-4">
           <Form
             onChange={handleInputChange}

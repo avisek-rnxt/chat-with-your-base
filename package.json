@@ -1,10 +1,7 @@
 {
-  "name": "chat-with-your-database",
+  "name": "bamboo-base",
   "version": "1.0.0",
-  "private": false,
-  "bin": {
-    "chat-with-your-database": "bin/cli.js"
-  },
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",

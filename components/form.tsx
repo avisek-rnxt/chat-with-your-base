@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useCallback, useRef, useState } from 'react'
-import { FlipWords } from './flipping-words'
 import { motion } from 'motion/react'
 import { Textarea } from '@/components/ui/textarea'
 import { ArrowUp } from 'lucide-react'
@@ -33,13 +32,6 @@ export function Form({ onChange, onSubmit, value }: Props) {
 
   const animationRef = useRef<HTMLDivElement | null>(null)
 
-  const searchs = [
-    'How can I optimize this query?',
-    'Show me my database stats',
-    'Which indexes are unused?',
-    'Count users from the last 30 days',
-  ]
-
   const handleResize = useCallback(() => {
     if (animationRef.current && inputRef.current) {
       inputRef.current.style.height = 'auto'
@@ -64,12 +56,6 @@ export function Form({ onChange, onSubmit, value }: Props) {
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto relative">
       <div className="relative">
-        {value || conversationStarted ? null : (
-          <div className="absolute left-4 top-4 pointer-events-none text-muted-foreground/60 text-sm">
-            <FlipWords words={searchs} />
-          </div>
-        )}
-
         <motion.div
           initial={{ opacity: 0, scale: 1 }}
           animate={{
@@ -82,7 +68,7 @@ export function Form({ onChange, onSubmit, value }: Props) {
           }}
           className="absolute inset-0 rounded-xl pointer-events-none"
           style={{
-            background: 'linear-gradient(135deg, hsl(166 76% 46% / 0.06), hsl(198 70% 50% / 0.04))',
+            background: 'linear-gradient(135deg, hsl(27 92% 53% / 0.06), hsl(35 90% 55% / 0.04))',
           }}
           ref={animationRef}
         />
@@ -102,11 +88,9 @@ export function Form({ onChange, onSubmit, value }: Props) {
                 handleSubmit(e)
               }
             }}
-            placeholder={
-              conversationStarted ? 'Ask anything about your database...' : ''
-            }
+            placeholder="Ask anything about your database..."
             value={value}
-            className="resize-none w-full p-4 pr-14 rounded-xl min-h-[56px] bg-card/80 border border-border/60 focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all duration-300 text-sm placeholder:text-muted-foreground/50"
+            className="resize-none w-full p-4 pr-14 rounded-xl min-h-[56px] bg-background border border-border focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-300 text-sm placeholder:text-muted-foreground/50 shadow-sm"
           />
           <button
             type="submit"

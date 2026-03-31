@@ -17,8 +17,9 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata = {
   metadataBase: new URL(defaultUrl),
-  title: 'Chat With Your Database',
-  description: 'The AI that really knows your postgres DB',
+  title: 'Bamboo Base',
+  description: 'Chat with your database using AI',
+  icons: [],
 }
 
 export default async function RootLayout({
@@ -32,7 +33,7 @@ export default async function RootLayout({
 <body className="bg-background text-foreground">
           <ThemeProvider
             attribute="class"
-            defaultTheme="dark"
+            defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >

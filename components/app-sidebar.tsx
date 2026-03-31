@@ -55,7 +55,7 @@ export function AppSidebar() {
                   <path d="M3 12A9 3 0 0 0 21 12" />
                 </svg>
               </div>
-              <span className="text-xs font-semibold text-foreground tracking-tight">QueryBase</span>
+              <span className="text-xs font-semibold text-foreground tracking-tight">Bamboo Base</span>
             </div>
           </SidebarGroupLabel>
           <SidebarGroupLabel className="my-1 px-2">
